@@ -456,6 +456,7 @@ struct page *cma_alloc(struct cma *cma, unsigned long count,
 	int ret = -ENOMEM;
 	int num_attempts = 0;
 	int max_retries = 5;
+	bool bypass = false;
 #ifdef CONFIG_AMLOGIC_CMA
 	int dummy;
 	unsigned long tick = 0;
@@ -463,6 +464,11 @@ struct page *cma_alloc(struct cma *cma, unsigned long count,
 
 	in_tick = sched_clock();
 #endif
+
+	trace_android_vh_cma_alloc_bypass(cma, count, align, no_warn,
+				&page, &bypass);
+	if (bypass)
+		return page;
 
 	if (!cma || !cma->count || !cma->bitmap)
 		goto out;
@@ -581,7 +587,7 @@ struct page *cma_alloc(struct cma *cma, unsigned long count,
 	 */
 	if (page) {
 		for (i = 0; i < count; i++)
-			page_kasan_tag_reset(page + i);
+			page_kasan_tag_reset(nth_page(page, i));
 	}
 
 	if (ret && !no_warn) {

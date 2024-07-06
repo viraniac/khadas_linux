@@ -1686,6 +1686,7 @@ static void isolate_freepages(struct compact_control *cc)
 #ifdef CONFIG_AMLOGIC_CMA
 	int migrate_type;
 #endif /* CONFIG_AMLOGIC_CMA */
+	bool bypass = false;
 
 	/* Try a small search of the free lists for a candidate */
 	isolate_start_pfn = fast_isolate_freepages(cc);
@@ -1750,6 +1751,9 @@ static void isolate_freepages(struct compact_control *cc)
 		    test_bit(FORBID_TO_CMA_BIT, &cc->total_migrate_scanned))
 			continue;
 	#endif /* CONFIG_AMLOGIC_CMA */
+		trace_android_vh_isolate_freepages(cc, page, &bypass);
+		if (bypass)
+			continue;
 
 		/* Found a block suitable for isolating free pages from. */
 		nr_isolated = isolate_freepages_block(cc, &isolate_start_pfn,
